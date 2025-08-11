@@ -1,0 +1,37 @@
+services:
+  app1:
+    build: .
+    container_name: app1
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./:/usr/src/app
+    command: /bin/sh -c "poetry run fastapi dev app1.py --host 0.0.0.0 --port 8888" # Not do this in production
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    # For app2, await this app1 are avaialble
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://0.0.0.0:8888/health" ]
+
+
+  app2:
+    build: .
+    container_name: app2
+    ports:
+      - "8889:8889"
+    volumes:
+      - ./:/usr/src/app
+    command: /bin/sh -c 'poetry run fastapi dev app2.py --host 0.0.0.0 --port 8889' # Not do this in production
+    depends_on:
+      app1:
+        condition: service_healthy
+
+  rabbitmq:
+    container_name: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    image: rabbitmq:latest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
