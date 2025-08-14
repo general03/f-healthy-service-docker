@@ -13,6 +13,8 @@ services:
     # For app2, await this app1 are avaialble
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://0.0.0.0:8888/health" ]
+      interval: 10s
+      retries: 2
 
 
   app2:
@@ -35,3 +37,4 @@ services:
     image: rabbitmq:latest
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
